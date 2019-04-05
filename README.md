@@ -29,7 +29,7 @@ BeauPools is an object pooling library for Unity. It contains both generic pools
 
 ### Installing BeauPools
 
-Download [BeauPools.unitypackage](https://gitlab.filamentgames.com/internal/tools/beaupools/raw/master/BeauPools.unitypackage) from the repo. Unpack it into your project.
+Download [BeauPools.unitypackage](https://github.com/FilamentGames/BeauPools/raw/master/BeauPools.unitypackage) from the repo. Unpack it into your project.
 
 BeauData uses the ``BeauPools`` namespace. You'll need to add the statement ``using BeauPools;`` to the top of any scripts using it.
 
