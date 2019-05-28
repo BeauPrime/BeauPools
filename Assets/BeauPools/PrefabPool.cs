@@ -18,6 +18,7 @@ namespace BeauPools
     public class PrefabPool<T> : DynamicPool<T> where T : Component
     {
         private string m_Name;
+        private T m_Prefab;
         private Transform m_PoolTransform;
 
         private Transform m_TargetParent;
@@ -30,6 +31,7 @@ namespace BeauPools
         public PrefabPool(string inName, int inInitialCapacity, T inPrefab, Transform inInactiveRoot, Transform inSpawnTarget = null, bool inbResetTransform = true, bool inbStrictTyping = true) : base(inInitialCapacity, GetConstructor(inName, inPrefab, inInactiveRoot), inbStrictTyping)
         {
             m_Name = inName;
+            m_Prefab = inPrefab;
             m_PoolTransform = inInactiveRoot;
 
             m_TargetParent = inSpawnTarget;
@@ -114,6 +116,7 @@ namespace BeauPools
         #endregion // Free
 
         public string Name { get { return m_Name; } }
+        public T Prefab { get { return m_Prefab; } }
         public Transform PoolTransform { get { return m_PoolTransform; } }
         public Transform DefaultSpawnTransform { get { return m_TargetParent; } }
 

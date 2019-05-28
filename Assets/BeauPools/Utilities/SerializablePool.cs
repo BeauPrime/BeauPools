@@ -51,6 +51,8 @@ namespace BeauPools
         #endregion // Inspector
 
         private PrefabPool<T> m_InnerPool;
+
+        [NonSerialized]
         private List<T> m_ActiveObjects = new List<T>();
 
         // default constructor
@@ -70,6 +72,32 @@ namespace BeauPools
         public string Name
         {
             get { return string.IsNullOrEmpty(m_Name) ? m_Prefab.name : m_Name; }
+            set
+            {
+                if (m_InnerPool != null)
+                    throw new InvalidOperationException("Cannot configure name while pool is initialized");
+                if (string.IsNullOrEmpty(value))
+                    m_Name = m_Prefab ? m_Prefab.name : null;
+                else
+                    m_Name = value;
+            }
+        }
+
+        /// <summary>
+        /// Pool prefab.
+        /// </summary>
+        public T Prefab
+        {
+            get { return m_Prefab; }
+            set
+            {
+                if (m_Prefab != value)
+                {
+                    if (m_InnerPool != null)
+                        throw new InvalidOperationException("Cannot change prefab while pool is initialized");
+                    m_Prefab = value;
+                }
+            }
         }
 
         /// <summary>
@@ -180,7 +208,7 @@ namespace BeauPools
         /// </summary>
         public void Reset()
         {
-            if (m_InnerPool != null)
+            if (m_InnerPool != null && m_ActiveObjects.Count > 0)
             {
                 using(PooledList<T> tempList = PooledList<T>.Create(m_ActiveObjects))
                 {

@@ -211,11 +211,11 @@ namespace BeauPools
         [Conditional("DEBUG")]
         static internal void VerifyObject<T>(this IPool<T> inThis, T inElement) where T : class
         {
-            if (!inThis.Config.StrictTyping)
-                return;
-                
             if (inElement == null)
                 throw new ArgumentNullException("inElement", "Provided object was null");
+
+            if (!inThis.Config.StrictTyping)
+                return;
             if (inElement.GetType() != typeof(T))
                 throw new ArgumentException("Expected type " + typeof(T).FullName + ", got " + inElement.GetType().FullName, "inElement");
         }
