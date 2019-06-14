@@ -8,8 +8,8 @@
  */
 
 using System;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BeauPools
 {
@@ -30,4 +30,10 @@ namespace BeauPools
     /// </summary>
     [Serializable]
     public sealed class RectTransformPool : SerializablePool<RectTransform> { }
+
+    /// <summary>
+    /// Serializable pool of Images.
+    /// </summary>
+    [Serializable]
+    public sealed class ImagePool : SerializablePool<Image> { }
 }
