@@ -9,6 +9,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace BeauPools
 {
@@ -54,6 +55,9 @@ namespace BeauPools
                 ResetTransform(t);
             t.transform.SetParent(m_TargetParent, false);
 
+            if (!m_TargetParent)
+                SceneManager.MoveGameObjectToScene(element.gameObject, SceneManager.GetActiveScene());
+
             m_Config.OnAlloc(this, element);
             return element;
         }
@@ -66,6 +70,9 @@ namespace BeauPools
             if (m_ResetTransform)
                 ResetTransform(t);
             t.transform.SetParent(inParent, false);
+
+            if (!inParent)
+                SceneManager.MoveGameObjectToScene(element.gameObject, SceneManager.GetActiveScene());
 
             m_Config.OnAlloc(this, element);
             return element;
@@ -98,6 +105,9 @@ namespace BeauPools
             }
             t.SetParent(inParent, inbWorldSpace);
 
+            if (!inParent)
+                SceneManager.MoveGameObjectToScene(element.gameObject, SceneManager.GetActiveScene());
+            
             m_Config.OnAlloc(this, element);
             return element;
         }
