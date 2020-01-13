@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2019. Filament Games, LLC. All rights reserved.
- * Author:  Alex Beauchesne
+ * Copyright (C) 2018 - 2020. Filament Games, LLC. All rights reserved.
+ * Author:  Autumn Beauchesne
  * Date:    5 April 2019
  * 
  * File:    IPool.cs
  * Purpose: Base interfaces for pools.
  */
-
 
 using System;
 
