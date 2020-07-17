@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 - 2020. Filament Games, LLC. All rights reserved.
+ * Copyright (C) 2018 - 2020. Autumn Beauchesne. All rights reserved.
  * Author:  Autumn Beauchesne
  * Date:    5 April 2019
  * 
@@ -16,36 +16,36 @@ namespace BeauPools
     /// <summary>
     /// Serializable pool of objects.
     /// </summary>
-    public abstract class SerializablePool<T> where T : Component
+    public abstract class SerializablePool<T> : IPrefabPool<T> where T : Component
     {
         #region Inspector
 
-        [SerializeField]
-        private string m_Name = null;
-
-        [SerializeField]
+        [SerializeField, Tooltip("Prefab to populate the pool with")]
         private T m_Prefab = null;
+
+        [SerializeField, Tooltip("Optional name to use for labeling instantiated prefabs")]
+        private string m_Name = null;
 
         [Header("Size")]
 
-        [SerializeField]
+        [SerializeField, Tooltip("Initial pool capacity")]
         private int m_InitialCapacity = 32;
 
-        [SerializeField]
-        private int m_InitialPrewarm = 16;
-
-        [SerializeField]
+        [SerializeField, Tooltip("If set, the pool will automatically prewarm on initialization")]
         private bool m_PrewarmOnInitialize = true;
+
+        [SerializeField, Tooltip("The number of prefabs to spawn if PrewarmOnInitialize is set")]
+        private int m_InitialPrewarm = 16;
 
         [Header("Transforms")]
 
-        [SerializeField]
+        [SerializeField, Tooltip("Default parent for instantiated prefabs")]
         private Transform m_DefaultPoolRoot = null;
 
-        [SerializeField]
+        [SerializeField, Tooltip("Default parent for allocated prefabs")]
         private Transform m_DefaultSpawnRoot = null;
 
-        [SerializeField]
+        [SerializeField, Tooltip("If set, prefab transforms will be reset to their initial state on allocation")]
         private bool m_ResetTransformOnAlloc = true;
 
         #endregion // Inspector
@@ -53,7 +53,7 @@ namespace BeauPools
         private PrefabPool<T> m_InnerPool;
 
         [NonSerialized]
-        private List<T> m_ActiveObjects = new List<T>();
+        private readonly List<T> m_ActiveObjects = new List<T>();
 
         // default constructor
         public SerializablePool() { }
@@ -127,9 +127,21 @@ namespace BeauPools
         }
 
         /// <summary>
-        /// Initializes the pool.
+        /// Attempts to initialize the pool. If already initialized, will skip.
         /// </summary>
-        public void Initialize(Transform inPoolRoot = null, Transform inSpawnRoot = null)
+        public bool TryInitialize(Transform inPoolRoot = null, Transform inSpawnRoot = null, int inPrewarmCapacity = -1)
+        {
+            if (m_InnerPool != null)
+                return false;
+
+            Initialize(inPoolRoot, inSpawnRoot, inPrewarmCapacity);
+            return true;
+        }
+
+        /// <summary>
+        /// Initializes the pool. Will throw an exception if the pool has already been initialized.
+        /// </summary>
+        public void Initialize(Transform inPoolRoot = null, Transform inSpawnRoot = null, int inPrewarmCapacity = -1)
         {
             if (m_InnerPool != null)
                 throw new InvalidOperationException("Cannot load pool twice");
@@ -138,6 +150,8 @@ namespace BeauPools
                 inPoolRoot = m_DefaultPoolRoot;
             if (inSpawnRoot == null)
                 inSpawnRoot = m_DefaultSpawnRoot;
+            if (inPrewarmCapacity < 0 && m_PrewarmOnInitialize)
+                inPrewarmCapacity = m_InitialPrewarm;
 
             if (!inPoolRoot)
                 throw new ArgumentNullException("inPoolRoot", "No pool root, and no default pool root");
@@ -146,8 +160,8 @@ namespace BeauPools
             m_InnerPool.Config.RegisterOnAlloc(OnAlloc);
             m_InnerPool.Config.RegisterOnFree(OnFree);
 
-            if (m_PrewarmOnInitialize)
-                m_InnerPool.Prewarm(m_InitialPrewarm);
+            if (inPrewarmCapacity > 0)
+                m_InnerPool.Prewarm(inPrewarmCapacity);
         }
 
         /// <summary>
@@ -163,13 +177,18 @@ namespace BeauPools
         /// </summary>
         public void Prewarm()
         {
-            m_InnerPool.Prewarm(m_InitialPrewarm);
+            if (m_InnerPool == null)
+            {
+                Initialize(null, null, m_InitialPrewarm);
+            }
+            else
+            {
+                m_InnerPool.Prewarm(m_InitialPrewarm);
+            }
         }
 
-        /// <summary>
-        /// The working pool.
-        /// </summary>
-        public PrefabPool<T> InnerPool
+        [Obsolete("SerializablePool now implements the IPrefabPool interface")]
+        public IPrefabPool<T> InnerPool
         {
             get { return m_InnerPool; }
         }
@@ -258,13 +277,148 @@ namespace BeauPools
 
         #endregion // Callbacks
 
-        #region Conversions
+        #region IPrefabPool
 
-        static public implicit operator PrefabPool<T>(SerializablePool<T> inSerialized)
+        public Transform PoolTransform
         {
-            return inSerialized.InnerPool;
+            get
+            {
+                if (m_InnerPool != null)
+                    return m_InnerPool.PoolTransform;
+                
+                return m_DefaultPoolRoot;
+            }
         }
 
-        #endregion // Conversions
+        public Transform DefaultSpawnTransform
+        {
+            get
+            {
+                if (m_InnerPool != null)
+                    return m_InnerPool.DefaultSpawnTransform;
+                
+                return m_DefaultSpawnRoot;
+            }
+        }
+
+        public PoolConfig<T> Config
+        {
+            get
+            {
+                if (m_InnerPool != null)
+                    return m_InnerPool.Config;
+
+                return null;
+            }
+        }
+
+        public int Capacity
+        {
+            get
+            {
+                if (m_InnerPool != null)
+                    return m_InnerPool.Capacity;
+                
+                return m_InitialCapacity;
+            }
+        }
+
+        public int Count
+        {
+            get
+            {
+                if (m_InnerPool != null)
+                    return m_InnerPool.Count;
+                
+                return 0;
+            }
+        }
+
+        public int InUse
+        {
+            get
+            {
+                if (m_InnerPool != null)
+                    return m_InnerPool.InUse;
+                
+                return 0;
+            }
+        }
+
+        public T Alloc(Transform inParent)
+        {
+            TryInitialize();
+            return m_InnerPool.Alloc(inParent);
+        }
+
+        public T Alloc(Vector3 inPosition, bool inbWorldSpace = false)
+        {
+            TryInitialize();
+            return m_InnerPool.Alloc(inPosition, inbWorldSpace);
+        }
+
+        public T Alloc(Vector3 inPosition, Quaternion inOrientation, bool inbWorldSpace = false)
+        {
+            TryInitialize();
+            return m_InnerPool.Alloc(inPosition, inOrientation, inbWorldSpace);
+        }
+
+        public T Alloc(Vector3 inPosition, Quaternion inOrientation, Transform inParent, bool inbWorldSpace = false)
+        {
+            TryInitialize();
+            return m_InnerPool.Alloc(inPosition, inOrientation, inParent, inbWorldSpace);
+        }
+
+        public T Alloc()
+        {
+            TryInitialize();
+            return m_InnerPool.Alloc();
+        }
+
+        public bool TryAlloc(out T outElement)
+        {
+            TryInitialize();
+            return m_InnerPool.TryAlloc(out outElement);
+        }
+
+        public void Free(T inElement)
+        {
+            if (m_InnerPool == null)
+                throw new InvalidOperationException("Cannot free an element while pool is not initialized");
+
+            m_InnerPool.Free(inElement);
+        }
+
+        public void Prewarm(int inCount)
+        {
+            if (m_InnerPool == null)
+            {
+                Initialize(null, null, inCount);
+            }
+            else
+            {
+                m_InnerPool.Prewarm(inCount);
+            }
+        }
+
+        public void Shrink(int inCount)
+        {
+            if (m_InnerPool != null)
+            {
+                m_InnerPool.Shrink(inCount);
+            }
+        }
+
+        public void Clear()
+        {
+            Reset();
+        }
+
+        public void Dispose()
+        {
+            Destroy();
+        }
+
+        #endregion // IPrefabPool
     }
 }

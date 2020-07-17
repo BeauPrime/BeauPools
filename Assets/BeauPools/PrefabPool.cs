@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 - 2020. Filament Games, LLC. All rights reserved.
+ * Copyright (C) 2018 - 2020. Autumn Beauchesne. All rights reserved.
  * Author:  Autumn Beauchesne
  * Date:    5 April 2019
  * 
@@ -16,30 +16,77 @@ namespace BeauPools
     /// <summary>
     /// Prefab pool with an expanding capacity.
     /// </summary>
-    public class PrefabPool<T> : DynamicPool<T> where T : Component
+    public class PrefabPool<T> : DynamicPool<T>, IPrefabPool<T> where T : Component
     {
         private string m_Name;
         private T m_Prefab;
         private Transform m_PoolTransform;
 
+        private bool m_ComponentSkipSelfConstruct;
+        private bool m_ComponentSkipSelfAlloc;
+
         private Transform m_TargetParent;
+        private bool m_IsRectTransform;
         private bool m_ResetTransform;
-        private Vector3 m_OriginalPosition;
+
         private Quaternion m_OriginalOrientation;
+        private Vector3 m_OriginalScale;
+        private Vector3 m_OriginalPositionOrAnchor3D;
+        private Vector2 m_OriginalSizeDelta;
+        private Vector4 m_OriginalAnchors;
+        private Vector2 m_OriginalPivot;
 
-        public PrefabPool(int inInitialCapacity, T inPrefab, Transform inInactiveRoot, Transform inSpawnTarget = null, bool inbResetTransform = true, bool inbStrictTyping = true) : this(inPrefab.name, inInitialCapacity, inPrefab, inInactiveRoot, inSpawnTarget, inbResetTransform, inbStrictTyping) { }
+        public PrefabPool(int inInitialCapacity, T inPrefab, Transform inPoolRoot, Transform inSpawnTarget = null, bool inbResetTransform = true, bool inbStrictTyping = true)
+            : this(inPrefab.name, inInitialCapacity, inPrefab, inPoolRoot, inSpawnTarget, inbResetTransform, inbStrictTyping) { }
 
-        public PrefabPool(string inName, int inInitialCapacity, T inPrefab, Transform inInactiveRoot, Transform inSpawnTarget = null, bool inbResetTransform = true, bool inbStrictTyping = true) : base(inInitialCapacity, GetConstructor(inName, inPrefab, inInactiveRoot), inbStrictTyping)
+        public PrefabPool(string inName, int inInitialCapacity, T inPrefab, Transform inPoolRoot, Transform inSpawnTarget = null, bool inbResetTransform = true, bool inbStrictTyping = true)
+            : base(inInitialCapacity, GetConstructor(inName, inPrefab, inPoolRoot), inbStrictTyping)
         {
             m_Name = inName;
             m_Prefab = inPrefab;
-            m_PoolTransform = inInactiveRoot;
+            m_PoolTransform = inPoolRoot;
 
             m_TargetParent = inSpawnTarget;
             m_ResetTransform = inbResetTransform;
 
-            m_OriginalPosition = inPrefab.transform.localPosition;
-            m_OriginalOrientation = inPrefab.transform.localRotation;
+            Transform prefabTransform = inPrefab.transform;
+            m_IsRectTransform = prefabTransform is RectTransform;
+
+            m_OriginalOrientation = prefabTransform.localRotation;
+            m_OriginalScale = prefabTransform.localScale;
+
+            if (m_IsRectTransform)
+            {
+                RectTransform prefabRectTransform = (RectTransform) prefabTransform;
+                m_OriginalPositionOrAnchor3D = prefabRectTransform.anchoredPosition3D;
+                m_OriginalSizeDelta = prefabRectTransform.sizeDelta;
+                m_OriginalPivot = prefabRectTransform.pivot;
+                
+                Vector2 originalMin, originalMax;
+                originalMin = prefabRectTransform.anchorMin;
+                originalMax = prefabRectTransform.anchorMax;
+                m_OriginalAnchors = new Vector4(originalMin.x, originalMin.y, originalMax.x, originalMax.y);
+            }
+            else
+            {
+                m_OriginalPositionOrAnchor3D = prefabTransform.localPosition;
+            }
+
+            if (inPrefab.GetComponentInChildren<IPoolConstructHandler>(true) != null)
+            {
+                m_Config.RegisterOnConstruct(OnConstructCheckComponents);
+                m_Config.RegisterOnDestruct(OnDestructCheckComponents);
+
+                m_ComponentSkipSelfConstruct = inPrefab is IPoolConstructHandler;
+            }
+
+            if (inPrefab.GetComponentInChildren<IPoolAllocHandler>(true) != null)
+            {
+                m_Config.RegisterOnAlloc(OnAllocCheckComponents);
+                m_Config.RegisterOnFree(OnFreeCheckComponents);
+
+                m_ComponentSkipSelfAlloc = inPrefab is IPoolAllocHandler;
+            }
 
             m_Config.RegisterOnDestruct(OnDestruct);
         }
@@ -132,17 +179,73 @@ namespace BeauPools
 
         #region Events
 
-        static private Constructor<T> GetConstructor(string inName, T inPrefab, Transform inInactiveRoot)
+        static private Constructor<T> GetConstructor(string inName, T inPrefab, Transform inPoolRoot)
         {
-            if (inInactiveRoot == null)
-                throw new ArgumentNullException("inInactiveRoot", "Cannot provide null transform as pool root");
+            if (inPoolRoot == null)
+                throw new ArgumentNullException("inPoolRoot", "Cannot provide null transform as pool root");
 
             return (p) =>
             {
-                T obj = UnityEngine.Object.Instantiate(inPrefab, inInactiveRoot, false);
-                obj.name = inName + string.Format(" [Pool {0}]", p.Count + p.InUse);
+                T obj = UnityEngine.Object.Instantiate(inPrefab, inPoolRoot, false);
+                obj.name = string.Format("{0} [Pool {1}]", inName, p.Count + p.InUse);
                 return obj;
             };
+        }
+
+        private void OnConstructCheckComponents(IPool<T> inPool, T inElement)
+        {
+            using(PooledList<IPoolConstructHandler> children = PooledList<IPoolConstructHandler>.Create())
+            {
+                inElement.GetComponentsInChildren<IPoolConstructHandler>(true, children);
+
+                for(int i = 0, length = children.Count; i < length; ++i)
+                {
+                    if (!m_ComponentSkipSelfConstruct || children[i] != inElement)
+                        children[i].OnConstruct();
+                }
+            }
+        }
+
+        private void OnDestructCheckComponents(IPool<T> inPool, T inElement)
+        {
+            using(PooledList<IPoolConstructHandler> children = PooledList<IPoolConstructHandler>.Create())
+            {
+                inElement.GetComponentsInChildren<IPoolConstructHandler>(true, children);
+
+                for(int i = 0, length = children.Count; i < length; ++i)
+                {
+                    if (!m_ComponentSkipSelfConstruct || children[i] != inElement)
+                        children[i].OnDestruct();
+                }
+            }
+        }
+
+        private void OnAllocCheckComponents(IPool<T> inPool, T inElement)
+        {
+            using(PooledList<IPoolAllocHandler> children = PooledList<IPoolAllocHandler>.Create())
+            {
+                inElement.GetComponentsInChildren<IPoolAllocHandler>(true, children);
+
+                for(int i = 0, length = children.Count; i < length; ++i)
+                {
+                    if (!m_ComponentSkipSelfAlloc || children[i] != inElement)
+                        children[i].OnAlloc();
+                }
+            }
+        }
+
+        private void OnFreeCheckComponents(IPool<T> inPool, T inElement)
+        {
+            using(PooledList<IPoolAllocHandler> children = PooledList<IPoolAllocHandler>.Create())
+            {
+                inElement.GetComponentsInChildren<IPoolAllocHandler>(true, children);
+
+                for(int i = 0, length = children.Count; i < length; ++i)
+                {
+                    if (!m_ComponentSkipSelfAlloc || children[i] != inElement)
+                        children[i].OnFree();
+                }
+            }
         }
 
         static private void OnDestruct(IPool<T> inPool, T inElement)
@@ -162,8 +265,22 @@ namespace BeauPools
 
         private void ResetTransform(Transform inTransform)
         {
-            inTransform.localPosition = m_OriginalPosition;
             inTransform.localRotation = m_OriginalOrientation;
+            inTransform.localScale = m_OriginalScale;
+
+            if (m_IsRectTransform)
+            {
+                RectTransform rectTransform = (RectTransform) inTransform;
+                rectTransform.anchoredPosition3D = m_OriginalPositionOrAnchor3D;
+                rectTransform.sizeDelta = m_OriginalSizeDelta;
+                rectTransform.pivot = m_OriginalPivot;
+                rectTransform.anchorMin = new Vector2(m_OriginalAnchors.x, m_OriginalAnchors.y);
+                rectTransform.anchorMax = new Vector2(m_OriginalAnchors.z, m_OriginalAnchors.w);
+            }
+            else
+            {
+                inTransform.localPosition = m_OriginalPositionOrAnchor3D;
+            }
         }
 
         #endregion // Events

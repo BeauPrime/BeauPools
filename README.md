@@ -1,7 +1,7 @@
 # BeauPools
 
-**Current Version: 0.1.0**  
-Updated 5 April 2019 | Changelog (Not yet available)
+**Current Version: 0.2.0**  
+Updated 17 July 2020 | [Changelog](CHANGELOG.md)
 
 ## About
 BeauPools is an object pooling library for Unity. It contains both generic pools and a Unity-specific prefab pool, along with utilities for managing those prefab pools.
@@ -29,19 +29,20 @@ BeauPools is an object pooling library for Unity. It contains both generic pools
 
 ### Installing BeauPools
 
-Download [BeauPools.unitypackage](https://github.com/FilamentGames/BeauPools/raw/master/BeauPools.unitypackage) from the repo. Unpack it into your project.
+Download [BeauPools.unitypackage](BeauPools.unitypackage) from the repo. Unpack it into your project.
 
 BeauData uses the ``BeauPools`` namespace. You'll need to add the statement ``using BeauPools;`` to the top of any scripts using it.
 
 ### Pool Types
 
-There are three types of pools in BeauPools: Fixed, Dynamic, and Prefab.
+There are four types of pools in BeauPools: Fixed, Dynamic, Prefab, and Serializable.
 
 | Pool Type | Capacity | Requires Constructor | Notes |
 | ----- | -------| - | - |
 | Fixed | Fixed capacity. If allocating from empty pool, an exception is thrown. | ✓ | |
 | Dynamic | Dynamic capacity. If allocating from empty pool, a new element will be constructed. | ✓ | |
 | Prefab | Dynamic pool (see above). | X | Unity-specific behavior documented [below](#prefabpool). |
+| Serializable | Dynamic pool (see above). | X | Similar functionality to Prefab pool, inspector serializable. |
 
 ### Creating/Destroying a Pool
 
@@ -133,7 +134,7 @@ somePool.Free(objectsInUse);
 
 ### Callbacks and Events
 
-If your pooled object inherits from the ``IPooledObject<T>`` interface, it will receive certain calls from the pool during the object's lifecycle. These events are ``OnConstruct``, ``OnAlloc``, ``OnFree``, and finally ``OnDestruct``.
+If your pooled object inherits from the ``IPooledObject<T>`` interface, it will receive certain calls from the pool during the object's lifecycle. These events are ``OnConstruct``, ``OnAlloc``, ``OnFree``, and finally ``OnDestruct``. The ``IPoolConstructHandler`` and ``IPoolAllocHandler`` interfaces also exist to provide non-generic interfaces for receiving these events, regardless of the exact pool type.
 
 ```csharp
 public class PooledObjectWithCallbacks : IPooledObject<PooledObjectWithCallbacks>
@@ -162,11 +163,38 @@ public class PooledObjectWithCallbacks : IPooledObject<PooledObjectWithCallbacks
     	...
     }
 }
+
+public class SomeConstructHandler : IPoolConstructHandler
+{
+    public void OnConstruct()
+    {
+        ...
+    }
+
+    public void OnDestruct()
+    {
+        ...
+    }
+}
+
+public class SomeAllocHandler : IPoolAllocHandler
+{
+    public void OnAlloc()
+    {
+        ...
+    }
+
+    public void OnFree()
+    {
+        ...
+    }
+}
 ```
 
 Some suggested uses for these callbacks:
 * Use the ``OnAlloc`` or ``OnFree`` callbacks to help reset state.
-* Use ``OnConstruct`` to remember the pool that owns this object. This would allow you to write a method to return the object to its owning pool.
+* Use ``OnConstruct`` and ``OnDestruct`` to help manage resources in situations where the standard Unity ``Awake`` and ``OnDestroy`` events may not fire (i.e. the object might never be activated)
+* Use ``OnConstruct(IPool<T>)`` to remember the pool that owns this object. This would allow you to write a method to return the object to its owning pool.
 
 Every pool also contains an ``PoolConfig`` object. This allows you to register additional callbacks on a per-pool rather than per-element basis. See [PoolConfig Members](#poolconfig-members) below for documentation.
 
@@ -179,10 +207,15 @@ PrefabPools are pools intended for instantiating and pooling Unity prefab object
 * By default, allocated instances are assigned as children of a specific Transform, or the root of the scene if no Transform is provided.
 * By default, allocated instances reset their position and orientation on allocation. This can be disabled.
 * PrefabPool provides overridden versions of the ``Alloc`` method to mirror some of Unity's ``Instantiate`` methods. See [PrefabPool Members](#prefabpool-members) below for documentation.
+* Any components on the prefab or its children that implement the ``IPoolConstructHandler`` or ``IPoolAllocHandler`` will receive pool events (``OnConstruct``, ``OnAlloc``, ``OnFree``, ``OnDestruct``)
 
 ### SerializablePool
 
-BeauPools provides the ``SerializablePool`` object for easy setup of a PrefabPool in the inspector. Note that due to Unity's serialization rules, you must create a subclass of SerializablePool for each type of component you with to pool.
+BeauPools provides the ``SerializablePool`` object for easy setup of a PrefabPool in the inspector. It can be treated as a PrefabPool, and also provides a set of methods for managing all currently allocated/active objects from the pool.
+
+A SerializablePool operates by constructing an internal PrefabPool and performing operations on that pool. The internal pool will be constructed when ``Initialize`` is called. It will also be lazily instantiated if any ``Alloc`` or ``Prewarm`` methods are called. It will not be lazily instantiated if a ``Free`` method is called, and will error if the internal pool is not present.
+
+Note: due to Unity's serialization rules, you must create a subclass of SerializablePool for each type of component you with to pool.
 
 ```csharp
 // This is necessary, since Unity won't serialize generic classes
@@ -196,7 +229,7 @@ public class TestSerializedPool : MonoBehaviour
     
     private void Start()
     {
-  		// Initialize must be called before the pool is used
+  		// Initialize can be called before the pool is used, but is not required
 		myPool.Initialize();
 	}
     
@@ -208,9 +241,8 @@ public class TestSerializedPool : MonoBehaviour
     
     public SomePooledBehaviour Spawn()
     {
-    	// Once the pool is initialized, you can retrieve its inner PrefabPool
-        // and call its methods
-    	return myPool.InnerPool.Alloc();
+    	// A SerializablePool can be treated like any other pool
+    	return myPool.Alloc();
     }
 }
 
@@ -267,18 +299,15 @@ public class TestSerializedPool : MonoBehaviour
 
 | Member | Type | Description |
 | - | - | - |
-| ``Name`` | Property | Name of the pool. |
 | ``ConfigureCapacity(int capacity, int prewarm, bool prewarmOnInit)`` | Method | Configures capacity and prewarm settings. |
 | ``ConfigureTransforms(Transform poolRoot, Transform spawnRoot, bool resetTransformOnAlloc)`` | Method | Configures transform and reset settings. |
-| ``Initialize()`` | Method | Initializes the internal pool. |
-| ``IsInitialized()`` | Method | Returns if the internal pool has been initialized. |
-| ``Prewarm()`` | Method | Prewarms the pool to ensure a certain amount of elements are available. |
-| ``InnerPool`` | Property | Returns the internal pool. |
+| ``Initialize()`` | Method | Initializes the pool. |
+| ``IsInitialized()`` | Method | Returns if the pool has been initialized. |
 | ``ActiveObjects()`` | Method | Returns the set of currently allocated objects. |
 | ``ActiveObjects(ICollection<T>)`` | Method | Adds the set of currently allocated objects to the given collection. |
 | ``ActiveObjectCount()`` | Method | Returns the number of currently allocated objects. |
-| ``Reset()``| Method | Returns all currently allocated objects to the internal pool. |
-| ``Destroy()`` | Method | Calls ``Reset()`` and destroys the internal pool. |
+| ``Reset()``| Method | Returns all currently allocated objects to the pool. |
+| ``Destroy()`` | Method | Calls ``Reset()`` and destroys the pool. |
 
 ### Misc Utilities
 
@@ -290,3 +319,4 @@ public class TestSerializedPool : MonoBehaviour
 | ``TransformPool`` | ``Transform`` specialization of ``SerializablePool`` |
 | ``SpriteRendererPool`` | ``SpriteRenderer`` specialization of ``SerializablePool`` |
 | ``RectTransformPool`` | ``RectTransform`` specialization of ``SerializablePool`` |
+| ``ImagePool`` | ``Image`` specialization of ``SerializablePool`` |

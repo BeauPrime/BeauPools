@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 - 2020. Filament Games, LLC. All rights reserved.
+ * Copyright (C) 2018 - 2020. Autumn Beauchesne. All rights reserved.
  * Author:  Autumn Beauchesne
  * Date:    5 April 2019
  * 
@@ -53,6 +53,16 @@ namespace BeauPools
                 m_OnDestruct += PooledObjectOnDestruct;
                 m_OnAlloc += PooledObjectOnAlloc;
                 m_OnFree += PooledObjectOnFree;
+            }
+            if (typeof(IPoolConstructHandler).IsAssignableFrom(type))
+            {
+                m_OnConstruct += PooledConstructHandlerOnConstruct;
+                m_OnDestruct += PooledConstructHandlerOnDestruct;
+            }
+            if (typeof(IPoolAllocHandler).IsAssignableFrom(type))
+            {
+                m_OnAlloc += PooledAllocHandlerOnAlloc;
+                m_OnFree += PooledAllocHandlerOnFree;
             }
         }
 
@@ -135,6 +145,26 @@ namespace BeauPools
         static private void PooledObjectOnFree(IPool<T> inPool, T inElement)
         {
             ((IPooledObject<T>) inElement).OnFree();
+        }
+
+        static private void PooledConstructHandlerOnConstruct(IPool<T> inPool, T inElement)
+        {
+            ((IPoolConstructHandler) inElement).OnConstruct();
+        }
+
+        static private void PooledConstructHandlerOnDestruct(IPool<T> inPool, T inElement)
+        {
+            ((IPoolConstructHandler) inElement).OnDestruct();
+        }
+
+        static private void PooledAllocHandlerOnAlloc(IPool<T> inPool, T inElement)
+        {
+            ((IPoolAllocHandler) inElement).OnAlloc();
+        }
+
+        static private void PooledAllocHandlerOnFree(IPool<T> inPool, T inElement)
+        {
+            ((IPoolAllocHandler) inElement).OnFree();
         }
 
         #endregion // Casted callbacks

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 - 2020. Filament Games, LLC. All rights reserved.
+ * Copyright (C) 2018 - 2020. Autumn Beauchesne. All rights reserved.
  * Author:  Autumn Beauchesne
  * Date:    5 April 2019
  * 
@@ -17,6 +17,9 @@ using System.Diagnostics;
 
 namespace BeauPools
 {
+    /// <summary>
+    /// Contains pool extension methods.
+    /// </summary>
     static public class Pool
     {
         /// <summary>
@@ -205,16 +208,16 @@ namespace BeauPools
         {
             Type type = typeof(T);
             if (type.IsAbstract || type.IsInterface)
-                throw new ArgumentException("Cannot create a generic pool with an abstract class or interface");
+                throw new ArgumentException("Cannot create a strictly-typed generic pool with an abstract class or interface");
         }
 
         [Conditional("DEBUG")]
-        static internal void VerifyObject<T>(this IPool<T> inThis, T inElement) where T : class
+        static internal void VerifyObject<T>(IPool<T> inPool, T inElement) where T : class
         {
             if (inElement == null)
                 throw new ArgumentNullException("inElement", "Provided object was null");
 
-            if (!inThis.Config.StrictTyping)
+            if (!inPool.Config.StrictTyping)
                 return;
             if (inElement.GetType() != typeof(T))
                 throw new ArgumentException("Expected type " + typeof(T).FullName + ", got " + inElement.GetType().FullName, "inElement");
