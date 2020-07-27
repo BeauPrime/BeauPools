@@ -9,6 +9,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
 
 namespace BeauPools
@@ -52,8 +53,8 @@ namespace BeauPools
 
         private PrefabPool<T> m_InnerPool;
 
-        [NonSerialized]
-        private readonly List<T> m_ActiveObjects = new List<T>();
+        [NonSerialized] private readonly List<T> m_ActiveObjects = new List<T>();
+        [NonSerialized] private ReadOnlyCollection<T> m_ReadOnlyActive;
 
         // default constructor
         public SerializablePool() { }
@@ -71,7 +72,7 @@ namespace BeauPools
         /// </summary>
         public string Name
         {
-            get { return string.IsNullOrEmpty(m_Name) ? m_Prefab.name : m_Name; }
+            get { return string.IsNullOrEmpty(m_Name) && m_Prefab ? m_Prefab.name : m_Name; }
             set
             {
                 if (m_InnerPool != null)
@@ -194,29 +195,14 @@ namespace BeauPools
         }
 
         /// <summary>
-        /// Enumerable containing all currently spawned objects.
-        /// This will be invalidated if you free any objects while iterating.
+        /// Collection containing all currently spawned objects.
         /// </summary>
-        public IEnumerable<T> ActiveObjects()
+        public ReadOnlyCollection<T> ActiveObjects
         {
-            foreach (var element in m_ActiveObjects)
-                yield return element;
+            get { return m_ReadOnlyActive ?? (m_ReadOnlyActive = new ReadOnlyCollection<T>(m_ActiveObjects)); }
         }
 
-        /// <summary>
-        /// Writes all currently spawned objects to the given collection.
-        /// Returns the number of currently spawned objects.
-        /// </summary>
-        public int ActiveObjects(ICollection<T> ioCollection)
-        {
-            foreach (var element in m_ActiveObjects)
-                ioCollection.Add(element);
-            return m_ActiveObjects.Count;
-        }
-
-        /// <summary>
-        /// Returns the number of current spawned objects.
-        /// </summary>
+        [Obsolete("ActiveObjectCount is deprecated in favor of ActiveObjects.Count")]
         public int ActiveObjectCount()
         {
             return m_ActiveObjects.Count;
