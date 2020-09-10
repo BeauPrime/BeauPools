@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace BeauPools
 {
@@ -234,6 +235,30 @@ namespace BeauPools
                 m_InnerPool.Dispose();
                 m_InnerPool = null;
             }
+        }
+
+        /// <summary>
+        /// Frees all allocated prefabs currently in the given scene.
+        /// </summary>
+        public int FreeAllInScene(Scene inScene)
+        {
+            if (m_InnerPool != null)
+            {
+                using(PooledList<T> tempList = PooledList<T>.Create())
+                {
+                    foreach(var activeObj in m_ActiveObjects)
+                    {
+                        if (activeObj.gameObject.scene == inScene)
+                            tempList.Add(activeObj);
+                    }
+
+                    int finalCount = tempList.Count;
+                    m_InnerPool.Free(tempList);
+                    return finalCount;
+                }
+            }
+            
+            return 0;
         }
 
         #region Virtuals
