@@ -38,6 +38,19 @@ namespace BeauPools
             return (p) => { return new T(); };
         }
 
+        #region TempAlloc
+
+        /// <summary>
+        /// Returns a temporary allocation.
+        /// </summary>
+        static public TempAlloc<T> TempAlloc<T>(this IPool<T> inThis) where T : class
+        {
+            T obj = inThis.Alloc();
+            return new TempAlloc<T>(inThis, obj);
+        }
+
+        #endregion // TempAlloc
+
         #region Collections
 
         #region Alloc
