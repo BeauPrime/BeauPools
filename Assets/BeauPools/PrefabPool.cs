@@ -42,6 +42,8 @@ namespace BeauPools
         public PrefabPool(string inName, int inInitialCapacity, T inPrefab, Transform inPoolRoot, Transform inSpawnTarget = null, bool inbResetTransform = true, bool inbStrictTyping = true)
             : base(inInitialCapacity, GetConstructor(inName, inPrefab, inPoolRoot), inbStrictTyping)
         {
+            UnityHelper.Initialize();
+
             m_Name = inName;
             m_Prefab = inPrefab;
             m_PoolTransform = inPoolRoot;
@@ -291,8 +293,8 @@ namespace BeauPools
         static private bool s_QuittingApplication;
         static private bool s_Initialized;
 
-        [RuntimeInitializeOnLoadMethod]
-        static private void Initialize()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static internal void Initialize()
         {
             if (!s_Initialized)
             {
