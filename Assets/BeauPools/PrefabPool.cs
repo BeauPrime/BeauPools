@@ -74,20 +74,19 @@ namespace BeauPools
                 m_OriginalPositionOrAnchor3D = prefabTransform.localPosition;
             }
 
-            if (inPrefab.GetComponentInChildren<IPoolConstructHandler>(true) != null)
+            m_ComponentSkipSelfConstruct = inPrefab is IPoolConstructHandler;
+            m_ComponentSkipSelfAlloc = inPrefab is IPoolAllocHandler;
+
+            if (inPrefab.GetComponentsInChildren<IPoolConstructHandler>(true).Length > (m_ComponentSkipSelfConstruct ? 1 : 0))
             {
                 m_Config.RegisterOnConstruct(OnConstructCheckComponents);
                 m_Config.RegisterOnDestruct(OnDestructCheckComponents);
-
-                m_ComponentSkipSelfConstruct = inPrefab is IPoolConstructHandler;
             }
 
-            if (inPrefab.GetComponentInChildren<IPoolAllocHandler>(true) != null)
+            if (inPrefab.GetComponentsInChildren<IPoolAllocHandler>(true).Length > (m_ComponentSkipSelfAlloc ? 1 : 0))
             {
                 m_Config.RegisterOnAlloc(OnAllocCheckComponents);
                 m_Config.RegisterOnFree(OnFreeCheckComponents);
-
-                m_ComponentSkipSelfAlloc = inPrefab is IPoolAllocHandler;
             }
 
             m_Config.RegisterOnDestruct(OnDestruct);
