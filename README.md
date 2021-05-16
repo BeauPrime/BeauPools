@@ -1,7 +1,7 @@
 # BeauPools
 
-**Current Version: 0.2.0**  
-Updated 17 July 2020 | [Changelog](CHANGELOG.md)
+**Current Version: 0.2.1**  
+Updated 15 May 2021 | [Changelog](CHANGELOG.md)
 
 ## About
 BeauPools is an object pooling library for Unity. It contains both generic pools and a Unity-specific prefab pool, along with utilities for managing those prefab pools.

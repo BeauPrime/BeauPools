@@ -283,7 +283,14 @@ namespace BeauPools
 
         private void OnFree(IPool<T> inPool, T inElement)
         {
-            m_ActiveObjects.Remove(inElement);
+            int idx = m_ActiveObjects.IndexOf(inElement);
+            int end = m_ActiveObjects.Count - 1;
+            if (idx >= 0)
+            {
+                if (idx != end)
+                    m_ActiveObjects[idx] = m_ActiveObjects[end];
+                m_ActiveObjects.RemoveAt(end);
+            }
         }
 
         #endregion // Callbacks

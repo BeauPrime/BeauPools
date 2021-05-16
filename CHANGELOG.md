@@ -1,3 +1,19 @@
+### Version 0.2.1
+**15 May 2021**
+
+Improvements to SerializablePool interface, bug fixes, and optimizations.
+
+### Features
+* Added `TempAlloc` disposable struct, to help manage temporary allocations.
+* Added ``SerializablePool.FreeAllInScene`` to assist with unloading scenes with allocated objects from a persistent pool
+
+### Fixes
+* Fixed bug with Application quit detection order, which should reduce errors when stopping the game in the editor under certain conditions
+* Fixed case where PrefabPool would unnecessarily attempt to call child alloc/construct callbacks if the parent implemented a pool callback interface
+
+### Improvements
+* ``SerializablePool.ActiveObjects`` now returns a ``ReadOnlyCollection`` instead of a plain `IEnumerable`
+
 ### Version 0.2.0
 **17 July 2020**
 
