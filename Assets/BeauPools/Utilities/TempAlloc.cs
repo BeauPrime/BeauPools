@@ -8,14 +8,14 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace BeauPools
 {
     /// <summary>
     /// Temporary pool allocation
     /// </summary>
-    public class TempAlloc<T> : IDisposable where T : class
+    public struct TempAlloc<T> : IEquatable<TempAlloc<T>>, IEquatable<T>, IDisposable where T : class
     {
         private T m_Obj;
         private IPool<T> m_Source;
@@ -34,7 +34,15 @@ namespace BeauPools
         /// <summary>
         /// Pooled object.
         /// </summary>
-        public T Object { get { return m_Obj; } }
+        public T Object { [MethodImpl(256)] get { return m_Obj; } }
+
+        /// <summary>
+        /// If this TempAlloc contains an allocation.
+        /// </summary>
+        public bool IsAllocated
+        {
+            [MethodImpl(256)] get { return !object.ReferenceEquals(m_Obj, null); }
+        }
 
         static public implicit operator T(TempAlloc<T> inTempAlloc)
         {
@@ -42,16 +50,83 @@ namespace BeauPools
         }
 
         /// <summary>
-        /// Recycles the object.
+        /// Frees the object.
         /// </summary>
-        public void Dispose()
+        public void Free()
         {
-            if (m_Source != null && m_Obj != null)
+            if (!object.ReferenceEquals(m_Obj, null))
             {
                 m_Source.Free(m_Obj);
                 m_Obj = null;
                 m_Source = null;
             }
         }
+
+        #region Interfaces and Overrides
+
+        public bool Equals(TempAlloc<T> other)
+        {
+            return object.ReferenceEquals(m_Obj, other.m_Obj);
+        }
+
+        public bool Equals(T other)
+        {
+            return object.ReferenceEquals(m_Obj, other);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is TempAlloc<T>)
+                return Equals((TempAlloc<T>) obj);
+            if (obj is T)
+                return Equals((T) obj);
+            return false;
+        }
+
+        /// <summary>
+        /// Frees the object.
+        /// </summary>
+        [MethodImpl(256)]
+        public void Dispose()
+        {
+            Free();
+        }
+
+        public override int GetHashCode()
+        {
+            return object.ReferenceEquals(m_Obj, null) ? 0 : m_Obj.GetHashCode();
+        }
+
+        static public bool operator ==(TempAlloc<T> left, TempAlloc<T> right)
+        {
+            return left.Equals(right);
+        }
+
+        static public bool operator !=(TempAlloc<T> left, TempAlloc<T> right)
+        {
+            return !left.Equals(right);
+        }
+
+        static public bool operator ==(TempAlloc<T> left, T right)
+        {
+            return left.Equals(right);
+        }
+
+        static public bool operator !=(TempAlloc<T> left, T right)
+        {
+            return !left.Equals(right);
+        }
+
+        static public bool operator ==(TempAlloc<T> left, object right)
+        {
+            return object.ReferenceEquals(left.m_Obj, right);
+        }
+
+        static public bool operator !=(TempAlloc<T> left, object right)
+        {
+            return !object.ReferenceEquals(left.m_Obj, right);
+        }
+
+        #endregion // Interfaces and Overrides
     }
 }

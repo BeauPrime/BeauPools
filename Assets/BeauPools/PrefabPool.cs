@@ -8,6 +8,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -77,19 +79,24 @@ namespace BeauPools
             m_ComponentSkipSelfConstruct = inPrefab is IPoolConstructHandler;
             m_ComponentSkipSelfAlloc = inPrefab is IPoolAllocHandler;
 
-            if (inPrefab.GetComponentsInChildren<IPoolConstructHandler>(true).Length > (m_ComponentSkipSelfConstruct ? 1 : 0))
+            inPrefab.GetComponentsInChildren<IPoolConstructHandler>(true, s_ConstructHandlerList);
+            if (s_ConstructHandlerList.Count > (m_ComponentSkipSelfConstruct ? 1 : 0))
             {
                 m_Config.RegisterOnConstruct(OnConstructCheckComponents);
                 m_Config.RegisterOnDestruct(OnDestructCheckComponents);
             }
 
-            if (inPrefab.GetComponentsInChildren<IPoolAllocHandler>(true).Length > (m_ComponentSkipSelfAlloc ? 1 : 0))
+            inPrefab.GetComponentsInChildren<IPoolAllocHandler>(true, s_AllocHandlerList);
+            if (s_AllocHandlerList.Count > (m_ComponentSkipSelfAlloc ? 1 : 0))
             {
                 m_Config.RegisterOnAlloc(OnAllocCheckComponents);
                 m_Config.RegisterOnFree(OnFreeCheckComponents);
             }
 
             m_Config.RegisterOnDestruct(OnDestruct);
+
+            s_AllocHandlerList.Clear();
+            s_ConstructHandlerList.Clear();
         }
 
         #region Specialized Alloc
@@ -126,11 +133,13 @@ namespace BeauPools
             return element;
         }
 
+        [MethodImpl(256)]
         public T Alloc(Vector3 inPosition, bool inbWorldSpace = false)
         {
             return Alloc(inPosition, m_OriginalOrientation, m_TargetParent, inbWorldSpace);
         }
 
+        [MethodImpl(256)]
         public T Alloc(Vector3 inPosition, Quaternion inOrientation, bool inbWorldSpace = false)
         {
             return Alloc(inPosition, inOrientation, m_TargetParent, inbWorldSpace);
@@ -285,6 +294,9 @@ namespace BeauPools
         }
 
         #endregion // Events
+
+        static private readonly List<IPoolConstructHandler> s_ConstructHandlerList = new List<IPoolConstructHandler>(8);
+        static private readonly List<IPoolAllocHandler> s_AllocHandlerList = new List<IPoolAllocHandler>(8);
     }
 
     static internal class UnityHelper

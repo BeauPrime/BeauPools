@@ -1,7 +1,7 @@
 # BeauPools
 
-**Current Version: 0.2.1**  
-Updated 15 May 2021 | [Changelog](CHANGELOG.md)
+**Current Version: 0.2.2**  
+Updated 11 Oct 2022 | [Changelog](CHANGELOG.md)
 
 ## About
 BeauPools is an object pooling library for Unity. It contains both generic pools and a Unity-specific prefab pool, along with utilities for managing those prefab pools.
@@ -266,13 +266,14 @@ public class TestSerializedPool : MonoBehaviour
 | ``Alloc()`` | Method | Allocates an element from the pool. |
 | ``Alloc(T[] array)`` | Method | Allocates elements from the pool to empty slots in the given array. |
 | ``Alloc(ICollection<T> collection, int count)`` | Method | Allocates ``[count]`` elements and adds them to the given collection. |
+| ``TempAlloc()`` | Method | Allocates an element from the pool and returns a disposable `TempAlloc<T>` struct that will free the element on dispose. |
 | ``TryAlloc(out T element)`` | Method | Attempts to allocate an element from the pool. |
 | ``TryAlloc(T[] array)`` | Method | Attempts to allocate elements from the pool to empty slots in the given array. |
 | ``TryAlloc(ICollection<T> collection, int count)`` | Method | Attempts to allocate ``[count]`` elements and add them to the given collection. |
 | ``Free(T element)`` | Method | Returns an element to the pool. |
 | ``Free(T[] array)`` | Method | Returns elements from the given array to the pool. |
 | ``Free(ICollection<T> collection)`` | Method | Returns elements from the given collection to the pool. |
-| ``UseIDisposable()`` | Method | Hooks up the ``IDisposable.Dispose()`` call to object destruction. (Only when ``T`` inherits from ``IDisposable`` )
+| ``UseIDisposable()`` | Method | Hooks up the ``IDisposable.Dispose()`` call to object destruction. (Only when ``T`` inherits from ``IDisposable`` ) |
 
 ### PoolConfig Members
 
@@ -303,9 +304,11 @@ public class TestSerializedPool : MonoBehaviour
 | ``ConfigureTransforms(Transform poolRoot, Transform spawnRoot, bool resetTransformOnAlloc)`` | Method | Configures transform and reset settings. |
 | ``Initialize()`` | Method | Initializes the pool. |
 | ``IsInitialized()`` | Method | Returns if the pool has been initialized. |
-| ``ActiveObjects()`` | Method | Returns the set of currently allocated objects. |
-| ``ActiveObjects(ICollection<T>)`` | Method | Adds the set of currently allocated objects to the given collection. |
-| ``ActiveObjectCount()`` | Method | Returns the number of currently allocated objects. |
+| ``ActiveObjects`` | Property | Returns the set of currently allocated objects. |
+| ``GetActiveObjects(ICollection<T>)`` | Method | Adds the set of currently allocated objects to the given collection. |
+| ``GetActiveObjects(T[])`` | Method | Adds the set of currently allocated objects to the given array. |
+| ``GetActiveObjects(T[], int)`` | Method | Adds the set of currently allocated objects to the given array at an offset. |
+| ``GetActiveObjects(List<T>)`` | Method | Adds the set of currently allocated objects to the given array. |
 | ``Reset()``| Method | Returns all currently allocated objects to the pool. |
 | ``Destroy()`` | Method | Calls ``Reset()`` and destroys the pool. |
 
@@ -320,3 +323,4 @@ public class TestSerializedPool : MonoBehaviour
 | ``SpriteRendererPool`` | ``SpriteRenderer`` specialization of ``SerializablePool`` |
 | ``RectTransformPool`` | ``RectTransform`` specialization of ``SerializablePool`` |
 | ``ImagePool`` | ``Image`` specialization of ``SerializablePool`` |
+| ``TempAlloc<T>`` | Disposable struct wrapper for a temporary allocation. Will free the allocated element on dispose. |

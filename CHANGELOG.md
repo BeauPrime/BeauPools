@@ -1,3 +1,14 @@
+## Version 0.2.2
+**11 Oct 2022**
+
+Improvements to SerializablePool interface, tweaks to TempAlloc.
+
+## Features
+* Added `SerializablePool.GetActiveObjects` method for copying list of active objects to an existing array, list, or collection.
+
+## Improvements
+* **Breaking Change**: `TempAlloc` has been converted to a struct (was erroneously a class despite prior changelog).
+
 ### Version 0.2.1
 **15 May 2021**
 

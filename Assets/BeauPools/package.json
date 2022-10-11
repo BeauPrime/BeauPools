@@ -1,6 +1,6 @@
 {
     "name": "com.beauprime.beaupools",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "displayName": "BeauPools",
     "description": "BeauPools is an object pooling library for Unity. It contains both generic pools and a Unity-specific prefab pool, along with utilities for managing those prefab pools.",
     "unity": "2018.3",

@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace BeauPools
 {
@@ -25,6 +26,7 @@ namespace BeauPools
         /// <summary>
         /// Prefills the pool to capacity.
         /// </summary>
+        [MethodImpl(256)]
         static public void Prewarm<T>(this IPool<T> inThis) where T : class
         {
             inThis.Prewarm(inThis.Capacity);
@@ -43,6 +45,7 @@ namespace BeauPools
         /// <summary>
         /// Returns a temporary allocation.
         /// </summary>
+        [MethodImpl(256)]
         static public TempAlloc<T> TempAlloc<T>(this IPool<T> inThis) where T : class
         {
             T obj = inThis.Alloc();
@@ -59,6 +62,7 @@ namespace BeauPools
         /// Allocates enough elements to fill the given array.
         /// Returns the total number of allocated elements.
         /// </summary>
+        [MethodImpl(256)]
         static public int Alloc<T>(this IPool<T> inThis, T[] inDest) where T : class
         {
             return Alloc<T>(inThis, inDest, 0, inDest.Length);
@@ -68,6 +72,7 @@ namespace BeauPools
         /// Allocates enough elements to fill the given array, starting from the given index.
         /// Returns the total number of allocated elements.
         /// </summary>
+        [MethodImpl(256)]
         static public int Alloc<T>(this IPool<T> inThis, T[] inDest, int inStartIndex) where T : class
         {
             return Alloc<T>(inThis, inDest, inStartIndex, inDest.Length - inStartIndex);
@@ -95,6 +100,7 @@ namespace BeauPools
         /// <summary>
         /// Allocates the given number of elements and adds to the collection.
         /// </summary>
+        [MethodImpl(256)]
         static public void Alloc<T>(this IPool<T> inThis, ICollection<T> inDest, int inCount) where T : class
         {
             for (int i = 0; i < inCount; ++i)
@@ -109,6 +115,7 @@ namespace BeauPools
         /// Attempts to allocate enough elements to fill the given array.
         /// Returns the total number of allocated elements.
         /// </summary>
+        [MethodImpl(256)]
         static public int TryAlloc<T>(this IPool<T> inThis, T[] inDest) where T : class
         {
             return TryAlloc<T>(inThis, inDest, 0, inDest.Length);
@@ -118,6 +125,7 @@ namespace BeauPools
         /// Attempts to allocate enough elements to fill the given array, starting from the given index.
         /// Returns the total number of allocated elements.
         /// </summary>
+        [MethodImpl(256)]
         static public int TryAlloc<T>(this IPool<T> inThis, T[] inDest, int inStartIndex) where T : class
         {
             return TryAlloc<T>(inThis, inDest, inStartIndex, inDest.Length - inStartIndex);
@@ -169,6 +177,7 @@ namespace BeauPools
         /// <summary>
         /// Frees all elements from the given array.
         /// </summary>
+        [MethodImpl(256)]
         static public void Free<T>(this IPool<T> inThis, T[] inSrc) where T : class
         {
             Free<T>(inThis, inSrc, 0, inSrc.Length);
@@ -177,6 +186,7 @@ namespace BeauPools
         /// <summary>
         /// Frees elements from the given array, starting at the given index.
         /// </summary>
+        [MethodImpl(256)]
         static public void Free<T>(this IPool<T> inThis, T[] inSrc, int inStartIndex) where T : class
         {
             Free<T>(inThis, inSrc, inStartIndex, inSrc.Length - inStartIndex);

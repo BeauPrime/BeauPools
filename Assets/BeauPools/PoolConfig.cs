@@ -7,6 +7,10 @@
  * Purpose: Callbacks and configurations for a pool. 
  */
 
+#if DEVELOPMENT || DEVELOPMENT_BUILD
+#define DEBUG
+#endif // DEVELOPMENT || DEVELOPMENT_BUILD
+
 using System;
 
 namespace BeauPools

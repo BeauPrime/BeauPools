@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -18,7 +19,7 @@ namespace BeauPools
     /// <summary>
     /// Serializable pool of objects.
     /// </summary>
-    public abstract class SerializablePool<T> : IPrefabPool<T> where T : Component
+    public class SerializablePool<T> : IPrefabPool<T> where T : Component
     {
         #region Inspector
 
@@ -169,6 +170,7 @@ namespace BeauPools
         /// <summary>
         /// Returns if the pool has been initialized.
         /// </summary>
+        [MethodImpl(256)]
         public bool IsInitialized()
         {
             return m_InnerPool != null;
@@ -200,7 +202,46 @@ namespace BeauPools
         /// </summary>
         public ReadOnlyCollection<T> ActiveObjects
         {
-            get { return m_ReadOnlyActive ?? (m_ReadOnlyActive = new ReadOnlyCollection<T>(m_ActiveObjects)); }
+            [MethodImpl(256)] get { return m_ReadOnlyActive ?? (m_ReadOnlyActive = new ReadOnlyCollection<T>(m_ActiveObjects)); }
+        }
+
+        /// <summary>
+        /// Copies active objects into the given array buffer.
+        /// </summary>
+        public int GetActiveObjects(T[] inBuffer)
+        {
+            int copyCount = Math.Min(inBuffer.Length, m_ActiveObjects.Count);
+            m_ActiveObjects.CopyTo(0, inBuffer, 0, copyCount);
+            return copyCount;
+        }
+
+        /// <summary>
+        /// Copies active objects into the given list.
+        /// </summary>
+        public int GetActiveObjects(List<T> inBuffer)
+        {
+            inBuffer.AddRange(m_ActiveObjects);
+            return m_ActiveObjects.Count;
+        }
+
+        /// <summary>
+        /// Copies active objects into the given collection.
+        /// </summary>
+        public int GetActiveObjects(ICollection<T> inBuffer)
+        {
+            for(int i = 0; i < m_ActiveObjects.Count; i++)
+                inBuffer.Add(m_ActiveObjects[i]);
+            return m_ActiveObjects.Count;
+        }
+
+        /// <summary>
+        /// Copies active objects into the given array buffer.
+        /// </summary>
+        public int GetActiveObjects(T[] inBuffer, int inBufferOffset)
+        {
+            int copyCount = Math.Min(inBuffer.Length - inBufferOffset, m_ActiveObjects.Count);
+            m_ActiveObjects.CopyTo(0, inBuffer, inBufferOffset, copyCount);
+            return copyCount;
         }
 
         [Obsolete("ActiveObjectCount is deprecated in favor of ActiveObjects.Count")]
@@ -363,42 +404,49 @@ namespace BeauPools
             }
         }
 
+        [MethodImpl(256)]
         public T Alloc(Transform inParent)
         {
             TryInitialize();
             return m_InnerPool.Alloc(inParent);
         }
 
+        [MethodImpl(256)]
         public T Alloc(Vector3 inPosition, bool inbWorldSpace = false)
         {
             TryInitialize();
             return m_InnerPool.Alloc(inPosition, inbWorldSpace);
         }
 
+        [MethodImpl(256)]
         public T Alloc(Vector3 inPosition, Quaternion inOrientation, bool inbWorldSpace = false)
         {
             TryInitialize();
             return m_InnerPool.Alloc(inPosition, inOrientation, inbWorldSpace);
         }
 
+        [MethodImpl(256)]
         public T Alloc(Vector3 inPosition, Quaternion inOrientation, Transform inParent, bool inbWorldSpace = false)
         {
             TryInitialize();
             return m_InnerPool.Alloc(inPosition, inOrientation, inParent, inbWorldSpace);
         }
 
+        [MethodImpl(256)]
         public T Alloc()
         {
             TryInitialize();
             return m_InnerPool.Alloc();
         }
 
+        [MethodImpl(256)]
         public bool TryAlloc(out T outElement)
         {
             TryInitialize();
             return m_InnerPool.TryAlloc(out outElement);
         }
 
+        [MethodImpl(256)]
         public void Free(T inElement)
         {
             if (m_InnerPool == null)
@@ -427,11 +475,13 @@ namespace BeauPools
             }
         }
 
+        [MethodImpl(256)]
         public void Clear()
         {
             Reset();
         }
 
+        [MethodImpl(256)]
         public void Dispose()
         {
             Destroy();
