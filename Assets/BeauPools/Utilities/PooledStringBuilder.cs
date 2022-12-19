@@ -57,7 +57,7 @@ namespace BeauPools
 
         static PooledStringBuilder()
         {
-            s_ObjectPool = new DynamicPool<PooledStringBuilder>(POOL_SIZE, Pool.DefaultConstructor<PooledStringBuilder>());
+            s_ObjectPool = new DynamicPool<PooledStringBuilder>(POOL_SIZE, (p) => new PooledStringBuilder());
         }
 
         /// <summary>

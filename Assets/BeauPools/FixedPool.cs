@@ -7,6 +7,10 @@
  * Purpose: Pool with fixed size. 
  */
 
+#if !SKIP_POOL_VERIFY && (DEVELOPMENT || DEVELOPMENT_BUILD || DEBUG)
+#define VERIFY_POOLS
+#endif // !SKIP_POOL_VERIFY && (DEVELOPMENT || DEVELOPMENT_BUILD || DEBUG)
+
 namespace BeauPools
 {
     /// <summary>

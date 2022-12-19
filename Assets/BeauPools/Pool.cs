@@ -7,9 +7,9 @@
  * Purpose: Extension methods for dealing with pools. 
  */
 
-#if DEVELOPMENT || DEVELOPMENT_BUILD
-#define DEBUG
-#endif // DEVELOPMENT || DEVELOPMENT_BUILD
+#if !SKIP_POOL_VERIFY && (DEVELOPMENT || DEVELOPMENT_BUILD || DEBUG)
+#define VERIFY_POOLS
+#endif // !SKIP_POOL_VERIFY && (DEVELOPMENT || DEVELOPMENT_BUILD || DEBUG)
 
 using System;
 using System.Collections.Generic;
@@ -220,13 +220,24 @@ namespace BeauPools
             inSrc.Clear();
         }
 
+        /// <summary>
+        /// Frees all elements of the given list.
+        /// </summary>
+        static public void Free<T>(this IPool<T> inThis, List<T> inSrc) where T : class
+        {
+            foreach (var element in inSrc)
+                inThis.Free(element);
+
+            inSrc.Clear();
+        }
+
         #endregion // Free
 
         #endregion // Collections
 
         #region Asserts
 
-        [Conditional("DEBUG")]
+        [Conditional("VERIFY_POOLS")]
         static internal void VerifyType<T>() where T : class
         {
             Type type = typeof(T);
@@ -234,7 +245,7 @@ namespace BeauPools
                 throw new ArgumentException("Cannot create a strictly-typed generic pool with an abstract class or interface");
         }
 
-        [Conditional("DEBUG")]
+        [Conditional("VERIFY_POOLS")]
         static internal void VerifyObject<T>(IPool<T> inPool, T inElement) where T : class
         {
             if (inElement == null)
@@ -246,43 +257,43 @@ namespace BeauPools
                 throw new ArgumentException("Expected type " + typeof(T).FullName + ", got " + inElement.GetType().FullName, "inElement");
         }
 
-        [Conditional("DEBUG")]
+        [Conditional("VERIFY_POOLS")]
         static internal void VerifySize(int inSize)
         {
             if (inSize <= 0)
                 throw new ArgumentOutOfRangeException("inSize", "Pool capacity must not be less than 1");
         }
 
-        [Conditional("DEBUG")]
+        [Conditional("VERIFY_POOLS")]
         static internal void VerifyCount(int inCount)
         {
             if (inCount <= 0)
                 throw new InvalidOperationException("Pool is empty");
         }
 
-        [Conditional("DEBUG")]
+        [Conditional("VERIFY_POOLS")]
         static internal void VerifyBalance(int inBalance)
         {
             if (inBalance < 0)
                 throw new InvalidOperationException("Mismatched alloc/free calls");
         }
 
-        [Conditional("DEBUG")]
+        [Conditional("VERIFY_POOLS")]
         static internal void VerifyConstructor<T>(Constructor<T> inConstructor) where T : class
         {
             if (inConstructor == null)
                 throw new ArgumentNullException("inConstructor", "Cannot provide a null constructor");
         }
 
-        [Conditional("DEBUG")]
+        [Conditional("VERIFY_POOLS")]
         static internal void VerifyNotInPool<T>(T[] inPool, T inElement)
         {
             if (Array.IndexOf(inPool, inElement) >= 0)
                 throw new ArgumentException("Element has already been freed", "inElement");
         }
 
-        [Conditional("DEBUG")]
-        static internal void VerifyNotInPool<T>(ICollection<T> inPool, T inElement)
+        [Conditional("VERIFY_POOLS")]
+        static internal void VerifyNotInPool<T>(List<T> inPool, T inElement)
         {
             if (inPool.Contains(inElement))
                 throw new ArgumentException("Element has already been freed", "inElement");

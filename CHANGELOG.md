@@ -1,3 +1,13 @@
+## Version 0.2.3
+**18 Dec 2022**
+
+Memory allocation optimizations
+
+## Improvements
+* Various `SerializablePool` memory allocation optimizations
+* Added `Pool.Free` overload for List
+* Safety checks can be bypassed by specifying `SKIP_POOL_VERIFY` compiler flag
+
 ## Version 0.2.2
 **11 Oct 2022**
 

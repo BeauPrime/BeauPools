@@ -7,9 +7,9 @@
  * Purpose: Callbacks and configurations for a pool. 
  */
 
-#if DEVELOPMENT || DEVELOPMENT_BUILD
-#define DEBUG
-#endif // DEVELOPMENT || DEVELOPMENT_BUILD
+#if !SKIP_POOL_VERIFY && (DEVELOPMENT || DEVELOPMENT_BUILD || DEBUG)
+#define VERIFY_POOLS
+#endif // !SKIP_POOL_VERIFY && (DEVELOPMENT || DEVELOPMENT_BUILD || DEBUG)
 
 using System;
 

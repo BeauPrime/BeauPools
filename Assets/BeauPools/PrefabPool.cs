@@ -7,6 +7,10 @@
  * Purpose: Dynamic pool for Unity prefabs. 
  */
 
+#if !SKIP_POOL_VERIFY && (DEVELOPMENT || DEVELOPMENT_BUILD || DEBUG)
+#define VERIFY_POOLS
+#endif // !SKIP_POOL_VERIFY && (DEVELOPMENT || DEVELOPMENT_BUILD || DEBUG)
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -49,6 +53,17 @@ namespace BeauPools
             m_Name = inName;
             m_Prefab = inPrefab;
             m_PoolTransform = inPoolRoot;
+
+            if (!inPoolRoot) {
+                throw new ArgumentNullException("inPoolRoot");
+            }
+            if (!inPrefab) {
+                throw new ArgumentNullException("inPoolRoot");
+            }
+
+            if (inPoolRoot.gameObject.activeInHierarchy) {
+                UnityEngine.Debug.LogWarningFormat("[PrefabPool] Prefab Pool '{0}' of type '{1}' has an active pool root '{2}'", inName, typeof(T).Name, inPoolRoot.name);
+            }
 
             m_TargetParent = inSpawnTarget;
             m_ResetTransform = inbResetTransform;
@@ -197,7 +212,9 @@ namespace BeauPools
             return (p) =>
             {
                 T obj = UnityEngine.Object.Instantiate(inPrefab, inPoolRoot, false);
+                #if UNITY_EDITOR
                 obj.name = string.Format("{0} [Pool {1}]", inName, p.Count + p.InUse);
+                #endif // UNITY_EDITOR
                 return obj;
             };
         }
@@ -322,6 +339,21 @@ namespace BeauPools
         static public bool IsQuitting()
         {
             return s_QuittingApplication;
+        }
+
+        static internal readonly FastEqualityComparer FastEquality = new FastEqualityComparer();
+        
+        internal class FastEqualityComparer : EqualityComparer<UnityEngine.Object>
+        {
+            public override bool Equals(UnityEngine.Object x, UnityEngine.Object y)
+            {
+                return object.Equals(x, y);
+            }
+
+            public override int GetHashCode(UnityEngine.Object obj)
+            {
+                return obj.GetHashCode();
+            }
         }
     }
 }

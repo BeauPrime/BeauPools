@@ -41,7 +41,7 @@ namespace BeauPools
 
         static PooledSet()
         {
-            s_ObjectPool = new DynamicPool<PooledSet<T>>(POOL_SIZE, Pool.DefaultConstructor<PooledSet<T>>());
+            s_ObjectPool = new DynamicPool<PooledSet<T>>(POOL_SIZE, (p) => new PooledSet<T>());
         }
 
         /// <summary>

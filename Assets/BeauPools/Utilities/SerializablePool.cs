@@ -164,7 +164,13 @@ namespace BeauPools
             m_InnerPool.Config.RegisterOnFree(OnFree);
 
             if (inPrewarmCapacity > 0)
+            {
                 m_InnerPool.Prewarm(inPrewarmCapacity);
+                if (m_ActiveObjects.Capacity < inPrewarmCapacity)
+                {
+                    m_ActiveObjects.Capacity = Mathf.NextPowerOfTwo(inPrewarmCapacity);
+                }
+            }
         }
 
         /// <summary>
@@ -257,9 +263,10 @@ namespace BeauPools
         {
             if (m_InnerPool != null && m_ActiveObjects.Count > 0)
             {
-                using(PooledList<T> tempList = PooledList<T>.Create(m_ActiveObjects))
+                int idx;
+                while((idx = m_ActiveObjects.Count - 1) >= 0)
                 {
-                    m_InnerPool.Free(tempList);
+                    m_InnerPool.Free(m_ActiveObjects[idx]);
                 }
             }
         }
