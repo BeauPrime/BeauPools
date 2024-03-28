@@ -11,8 +11,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Serializable pool of Transforms.
     /// </summary>

@@ -1,9 +1,25 @@
+## Version 0.3.0
+**28 March 2024**
+
+New `PrefabPool` instance data, optimizations
+
+### Features
+* Added `Pool.TryFree(Component)` and `Pool.TryFree(GameObject)` to attempt to return an instance back to its original pool
+
+### Improvements
+* `PrefabPool` caches `IPoolAllocHandler`/`IPoolConstructHandler` instances per-instance
+* `PoolConfig` ignores strict type testing for abstract, sealed, and interface types
+* `DynamicPool.Prewarm` attempts to reserve additional storage (if required) before constructing new instances
+* `PrefabPool` uses `SetLocalPositionAndRotation` instead of individual transform position/rotation changes [2021.3+]
+* `PooledStringBuilder` maintains small and large pools, used depending on the requested capacity
+* Added `PooledStringBuilder.Prewarm()` for prewarming small/large pools
+
 ## Version 0.2.3
 **18 Dec 2022**
 
 Memory allocation optimizations
 
-## Improvements
+### Improvements
 * Various `SerializablePool` memory allocation optimizations
 * Added `Pool.Free` overload for List
 * Safety checks can be bypassed by specifying `SKIP_POOL_VERIFY` compiler flag
@@ -13,13 +29,13 @@ Memory allocation optimizations
 
 Improvements to SerializablePool interface, tweaks to TempAlloc.
 
-## Features
+### Features
 * Added `SerializablePool.GetActiveObjects` method for copying list of active objects to an existing array, list, or collection.
 
-## Improvements
+### Improvements
 * **Breaking Change**: `TempAlloc` has been converted to a struct (was erroneously a class despite prior changelog).
 
-### Version 0.2.1
+## Version 0.2.1
 **15 May 2021**
 
 Improvements to SerializablePool interface, bug fixes, and optimizations.
@@ -35,7 +51,7 @@ Improvements to SerializablePool interface, bug fixes, and optimizations.
 ### Improvements
 * ``SerializablePool.ActiveObjects`` now returns a ``ReadOnlyCollection`` instead of a plain `IEnumerable`
 
-### Version 0.2.0
+## Version 0.2.0
 **17 July 2020**
 
 Improvements to prefab pools and serializable pools. Updated copyright info, package name.

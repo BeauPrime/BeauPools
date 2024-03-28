@@ -14,13 +14,11 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Serializable pool of objects.
     /// </summary>
-    public class SerializablePool<T> : IPrefabPool<T> where T : Component
-    {
+    public class SerializablePool<T> : IPrefabPool<T> where T : Component {
         #region Inspector
 
         [SerializeField, Tooltip("Prefab to populate the pool with")]
@@ -63,8 +61,7 @@ namespace BeauPools
 
         public SerializablePool(T inPrefab) : this(inPrefab.name, inPrefab) { }
 
-        public SerializablePool(string inName, T inPrefab)
-        {
+        public SerializablePool(string inName, T inPrefab) {
             m_Name = inName;
             m_Prefab = inPrefab;
         }
@@ -72,11 +69,9 @@ namespace BeauPools
         /// <summary>
         /// Pool name.
         /// </summary>
-        public string Name
-        {
+        public string Name {
             get { return string.IsNullOrEmpty(m_Name) && m_Prefab ? m_Prefab.name : m_Name; }
-            set
-            {
+            set {
                 if (m_InnerPool != null)
                     throw new InvalidOperationException("Cannot configure name while pool is initialized");
                 if (string.IsNullOrEmpty(value))
@@ -89,13 +84,10 @@ namespace BeauPools
         /// <summary>
         /// Pool prefab.
         /// </summary>
-        public T Prefab
-        {
+        public T Prefab {
             get { return m_Prefab; }
-            set
-            {
-                if (m_Prefab != value)
-                {
+            set {
+                if (m_Prefab != value) {
                     if (m_InnerPool != null)
                         throw new InvalidOperationException("Cannot change prefab while pool is initialized");
                     m_Prefab = value;
@@ -106,8 +98,7 @@ namespace BeauPools
         /// <summary>
         /// Configures capacity and prewarm settings.
         /// </summary>
-        public void ConfigureCapacity(int inCapacity, int inPrewarm, bool inbPrewarmOnInit = true)
-        {
+        public void ConfigureCapacity(int inCapacity, int inPrewarm, bool inbPrewarmOnInit = true) {
             if (m_InnerPool != null)
                 throw new InvalidOperationException("Cannot configure settings while pool is initialized");
 
@@ -119,8 +110,7 @@ namespace BeauPools
         /// <summary>
         /// Configures transform and reset settings.
         /// </summary>
-        public void ConfigureTransforms(Transform inPoolRoot, Transform inSpawnRoot = null, bool inbResetTransformOnAlloc = true)
-        {
+        public void ConfigureTransforms(Transform inPoolRoot, Transform inSpawnRoot = null, bool inbResetTransformOnAlloc = true) {
             if (m_InnerPool != null)
                 throw new InvalidOperationException("Cannot configure settings while pool is initialized");
 
@@ -132,8 +122,7 @@ namespace BeauPools
         /// <summary>
         /// Attempts to initialize the pool. If already initialized, will skip.
         /// </summary>
-        public bool TryInitialize(Transform inPoolRoot = null, Transform inSpawnRoot = null, int inPrewarmCapacity = -1)
-        {
+        public bool TryInitialize(Transform inPoolRoot = null, Transform inSpawnRoot = null, int inPrewarmCapacity = -1) {
             if (m_InnerPool != null)
                 return false;
 
@@ -144,8 +133,7 @@ namespace BeauPools
         /// <summary>
         /// Initializes the pool. Will throw an exception if the pool has already been initialized.
         /// </summary>
-        public void Initialize(Transform inPoolRoot = null, Transform inSpawnRoot = null, int inPrewarmCapacity = -1)
-        {
+        public void Initialize(Transform inPoolRoot = null, Transform inSpawnRoot = null, int inPrewarmCapacity = -1) {
             if (m_InnerPool != null)
                 throw new InvalidOperationException("Cannot load pool twice");
 
@@ -163,11 +151,9 @@ namespace BeauPools
             m_InnerPool.Config.RegisterOnAlloc(OnAlloc);
             m_InnerPool.Config.RegisterOnFree(OnFree);
 
-            if (inPrewarmCapacity > 0)
-            {
+            if (inPrewarmCapacity > 0) {
                 m_InnerPool.Prewarm(inPrewarmCapacity);
-                if (m_ActiveObjects.Capacity < inPrewarmCapacity)
-                {
+                if (m_ActiveObjects.Capacity < inPrewarmCapacity) {
                     m_ActiveObjects.Capacity = Mathf.NextPowerOfTwo(inPrewarmCapacity);
                 }
             }
@@ -176,46 +162,39 @@ namespace BeauPools
         /// <summary>
         /// Returns if the pool has been initialized.
         /// </summary>
-        [MethodImpl(256)]
-        public bool IsInitialized()
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsInitialized() {
             return m_InnerPool != null;
         }
 
         /// <summary>
         /// Prewarms the pool.
         /// </summary>
-        public void Prewarm()
-        {
-            if (m_InnerPool == null)
-            {
+        public void Prewarm() {
+            if (m_InnerPool == null) {
                 Initialize(null, null, m_InitialPrewarm);
-            }
-            else
-            {
+            } else {
                 m_InnerPool.Prewarm(m_InitialPrewarm);
             }
         }
 
         [Obsolete("SerializablePool now implements the IPrefabPool interface")]
-        public IPrefabPool<T> InnerPool
-        {
+        public IPrefabPool<T> InnerPool {
             get { return m_InnerPool; }
         }
 
         /// <summary>
         /// Collection containing all currently spawned objects.
         /// </summary>
-        public ReadOnlyCollection<T> ActiveObjects
-        {
-            [MethodImpl(256)] get { return m_ReadOnlyActive ?? (m_ReadOnlyActive = new ReadOnlyCollection<T>(m_ActiveObjects)); }
+        public ReadOnlyCollection<T> ActiveObjects {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return m_ReadOnlyActive ?? (m_ReadOnlyActive = new ReadOnlyCollection<T>(m_ActiveObjects)); }
         }
 
         /// <summary>
         /// Copies active objects into the given array buffer.
         /// </summary>
-        public int GetActiveObjects(T[] inBuffer)
-        {
+        public int GetActiveObjects(T[] inBuffer) {
             int copyCount = Math.Min(inBuffer.Length, m_ActiveObjects.Count);
             m_ActiveObjects.CopyTo(0, inBuffer, 0, copyCount);
             return copyCount;
@@ -224,8 +203,7 @@ namespace BeauPools
         /// <summary>
         /// Copies active objects into the given list.
         /// </summary>
-        public int GetActiveObjects(List<T> inBuffer)
-        {
+        public int GetActiveObjects(List<T> inBuffer) {
             inBuffer.AddRange(m_ActiveObjects);
             return m_ActiveObjects.Count;
         }
@@ -233,9 +211,8 @@ namespace BeauPools
         /// <summary>
         /// Copies active objects into the given collection.
         /// </summary>
-        public int GetActiveObjects(ICollection<T> inBuffer)
-        {
-            for(int i = 0; i < m_ActiveObjects.Count; i++)
+        public int GetActiveObjects(ICollection<T> inBuffer) {
+            for (int i = 0; i < m_ActiveObjects.Count; i++)
                 inBuffer.Add(m_ActiveObjects[i]);
             return m_ActiveObjects.Count;
         }
@@ -243,29 +220,24 @@ namespace BeauPools
         /// <summary>
         /// Copies active objects into the given array buffer.
         /// </summary>
-        public int GetActiveObjects(T[] inBuffer, int inBufferOffset)
-        {
+        public int GetActiveObjects(T[] inBuffer, int inBufferOffset) {
             int copyCount = Math.Min(inBuffer.Length - inBufferOffset, m_ActiveObjects.Count);
             m_ActiveObjects.CopyTo(0, inBuffer, inBufferOffset, copyCount);
             return copyCount;
         }
 
         [Obsolete("ActiveObjectCount is deprecated in favor of ActiveObjects.Count")]
-        public int ActiveObjectCount()
-        {
+        public int ActiveObjectCount() {
             return m_ActiveObjects.Count;
         }
 
         /// <summary>
         /// Returns all currently allocated prefabs to the pool.
         /// </summary>
-        public void Reset()
-        {
-            if (m_InnerPool != null && m_ActiveObjects.Count > 0)
-            {
+        public void Reset() {
+            if (m_InnerPool != null && m_ActiveObjects.Count > 0) {
                 int idx;
-                while((idx = m_ActiveObjects.Count - 1) >= 0)
-                {
+                while ((idx = m_ActiveObjects.Count - 1) >= 0) {
                     m_InnerPool.Free(m_ActiveObjects[idx]);
                 }
             }
@@ -274,10 +246,8 @@ namespace BeauPools
         /// <summary>
         /// Unloads the pool.
         /// </summary>
-        public void Destroy()
-        {
-            if (m_InnerPool != null)
-            {
+        public void Destroy() {
+            if (m_InnerPool != null) {
                 Reset();
 
                 m_InnerPool.Dispose();
@@ -288,14 +258,10 @@ namespace BeauPools
         /// <summary>
         /// Frees all allocated prefabs currently in the given scene.
         /// </summary>
-        public int FreeAllInScene(Scene inScene)
-        {
-            if (m_InnerPool != null)
-            {
-                using(PooledList<T> tempList = PooledList<T>.Create())
-                {
-                    foreach(var activeObj in m_ActiveObjects)
-                    {
+        public int FreeAllInScene(Scene inScene) {
+            if (m_InnerPool != null) {
+                using (PooledList<T> tempList = PooledList<T>.Create()) {
+                    foreach (var activeObj in m_ActiveObjects) {
                         if (activeObj.gameObject.scene == inScene)
                             tempList.Add(activeObj);
                     }
@@ -305,7 +271,7 @@ namespace BeauPools
                     return finalCount;
                 }
             }
-            
+
             return 0;
         }
 
@@ -315,8 +281,7 @@ namespace BeauPools
         /// Override to allow subclasses of T to be used for the prefab.
         /// By default, this will return true if T is an abstract type.
         /// </summary>
-        protected virtual bool AllowLooseTyping()
-        {
+        protected virtual bool AllowLooseTyping() {
             return typeof(T).IsAbstract;
         }
 
@@ -324,17 +289,14 @@ namespace BeauPools
 
         #region Callbacks
 
-        private void OnAlloc(IPool<T> inPool, T inElement)
-        {
+        private void OnAlloc(IPool<T> inPool, T inElement) {
             m_ActiveObjects.Add(inElement);
         }
 
-        private void OnFree(IPool<T> inPool, T inElement)
-        {
+        private void OnFree(IPool<T> inPool, T inElement) {
             int idx = m_ActiveObjects.IndexOf(inElement);
             int end = m_ActiveObjects.Count - 1;
-            if (idx >= 0)
-            {
+            if (idx >= 0) {
                 if (idx != end)
                     m_ActiveObjects[idx] = m_ActiveObjects[end];
                 m_ActiveObjects.RemoveAt(end);
@@ -345,32 +307,26 @@ namespace BeauPools
 
         #region IPrefabPool
 
-        public Transform PoolTransform
-        {
-            get
-            {
+        public Transform PoolTransform {
+            get {
                 if (m_InnerPool != null)
                     return m_InnerPool.PoolTransform;
-                
+
                 return m_DefaultPoolRoot;
             }
         }
 
-        public Transform DefaultSpawnTransform
-        {
-            get
-            {
+        public Transform DefaultSpawnTransform {
+            get {
                 if (m_InnerPool != null)
                     return m_InnerPool.DefaultSpawnTransform;
-                
+
                 return m_DefaultSpawnRoot;
             }
         }
 
-        public PoolConfig<T> Config
-        {
-            get
-            {
+        public PoolConfig<T> Config {
+            get {
                 if (m_InnerPool != null)
                     return m_InnerPool.Config;
 
@@ -378,119 +334,102 @@ namespace BeauPools
             }
         }
 
-        public int Capacity
-        {
-            get
-            {
+        public int Capacity {
+            get {
                 if (m_InnerPool != null)
                     return m_InnerPool.Capacity;
-                
+
                 return m_InitialCapacity;
             }
         }
 
-        public int Count
-        {
-            get
-            {
+        public int Count {
+            get {
                 if (m_InnerPool != null)
                     return m_InnerPool.Count;
-                
+
                 return 0;
             }
         }
 
-        public int InUse
-        {
-            get
-            {
+        public int InUse {
+            get {
                 if (m_InnerPool != null)
                     return m_InnerPool.InUse;
-                
+
                 return 0;
             }
         }
 
-        [MethodImpl(256)]
-        public T Alloc(Transform inParent)
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Alloc(Transform inParent) {
             TryInitialize();
             return m_InnerPool.Alloc(inParent);
         }
 
-        [MethodImpl(256)]
-        public T Alloc(Vector3 inPosition, bool inbWorldSpace = false)
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Alloc(Vector3 inPosition, bool inbWorldSpace = false) {
             TryInitialize();
             return m_InnerPool.Alloc(inPosition, inbWorldSpace);
         }
 
-        [MethodImpl(256)]
-        public T Alloc(Vector3 inPosition, Quaternion inOrientation, bool inbWorldSpace = false)
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Alloc(Vector3 inPosition, Quaternion inOrientation, bool inbWorldSpace = false) {
             TryInitialize();
             return m_InnerPool.Alloc(inPosition, inOrientation, inbWorldSpace);
         }
 
-        [MethodImpl(256)]
-        public T Alloc(Vector3 inPosition, Quaternion inOrientation, Transform inParent, bool inbWorldSpace = false)
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Alloc(Vector3 inPosition, Quaternion inOrientation, Transform inParent, bool inbWorldSpace = false) {
             TryInitialize();
             return m_InnerPool.Alloc(inPosition, inOrientation, inParent, inbWorldSpace);
         }
 
-        [MethodImpl(256)]
-        public T Alloc()
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Alloc() {
             TryInitialize();
             return m_InnerPool.Alloc();
         }
 
-        [MethodImpl(256)]
-        public bool TryAlloc(out T outElement)
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryAlloc(out T outElement) {
             TryInitialize();
             return m_InnerPool.TryAlloc(out outElement);
         }
 
-        [MethodImpl(256)]
-        public void Free(T inElement)
-        {
+        void IPool.Free(object inElement) {
+            Free((T) inElement);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Free(T inElement) {
             if (m_InnerPool == null)
                 throw new InvalidOperationException("Cannot free an element while pool is not initialized");
 
             m_InnerPool.Free(inElement);
         }
 
-        public void Prewarm(int inCount)
-        {
-            if (m_InnerPool == null)
-            {
+        public void Prewarm(int inCount) {
+            if (m_InnerPool == null) {
                 Initialize(null, null, inCount);
-            }
-            else
-            {
+            } else {
                 m_InnerPool.Prewarm(inCount);
             }
         }
 
-        public void Shrink(int inCount)
-        {
-            if (m_InnerPool != null)
-            {
+        public void Shrink(int inCount) {
+            if (m_InnerPool != null) {
                 m_InnerPool.Shrink(inCount);
             }
         }
 
-        [MethodImpl(256)]
-        public void Clear()
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear() {
             Reset();
         }
 
-        [MethodImpl(256)]
-        public void Dispose()
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose() {
             Destroy();
         }
 

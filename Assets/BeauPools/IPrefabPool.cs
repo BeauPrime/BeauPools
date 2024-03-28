@@ -9,13 +9,11 @@
 
 using UnityEngine;
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Pool for a prefab.
     /// </summary>
-    public interface IPrefabPool<T> : IPool<T> where T : Component
-    {
+    public interface IPrefabPool<T> : IPool<T> where T : Component {
         string Name { get; }
         T Prefab { get; }
         Transform PoolTransform { get; }

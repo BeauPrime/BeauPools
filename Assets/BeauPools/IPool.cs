@@ -9,13 +9,11 @@
 
 using System;
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Non-generic pool.
     /// </summary>
-    public interface IPool : IDisposable
-    {
+    public interface IPool : IDisposable {
         /// <summary>
         /// Current pool capacity.
         /// </summary>
@@ -45,13 +43,17 @@ namespace BeauPools
         /// Clears the pool.
         /// </summary>
         void Clear();
+
+        /// <summary>
+        /// Frees an element back into the pool.
+        /// </summary>
+        void Free(object inElement);
     }
 
     /// <summary>
     /// Generic pool.
     /// </summary>
-    public interface IPool<T> : IPool where T : class
-    {
+    public interface IPool<T> : IPool where T : class {
         /// <summary>
         /// Pool event configuration.
         /// </summary>

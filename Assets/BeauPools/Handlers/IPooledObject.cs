@@ -7,13 +7,11 @@
  * Purpose: Interface for a pooled object with lifecycle callbacks. 
  */
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Pooled object. Receives pool events.
     /// </summary>
-    public interface IPooledObject<T> where T : class
-    {
+    public interface IPooledObject<T> where T : class {
         /// <summary>
         /// Called when the object is constructed for a pool.
         /// </summary>
@@ -23,7 +21,7 @@ namespace BeauPools
         /// Called when the object is destroyed while in the pool.
         /// </summary>
         void OnDestruct();
-        
+
         /// <summary>
         /// Called when the object is allocated from the pool.
         /// </summary>

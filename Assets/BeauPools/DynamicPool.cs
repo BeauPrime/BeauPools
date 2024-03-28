@@ -11,22 +11,22 @@
 #define VERIFY_POOLS
 #endif // !SKIP_POOL_VERIFY && (DEVELOPMENT || DEVELOPMENT_BUILD || DEBUG)
 
+using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Unity.IL2CPP.CompilerServices;
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Pool with an expanding capacity.
     /// </summary>
-    public class DynamicPool<T> : IPool<T> where T : class
-    {
+    public class DynamicPool<T> : IPool<T> where T : class {
         protected PoolConfig<T> m_Config;
 
         private List<T> m_Elements;
         private int m_UseCount;
 
-        public DynamicPool(int inInitialCapacity, Constructor<T> inConstructor, bool inbStrictTyping = true)
-        {
+        public DynamicPool(int inInitialCapacity, Constructor<T> inConstructor, bool inbStrictTyping = true) {
             Pool.VerifySize(inInitialCapacity);
 
             m_Config = new PoolConfig<T>(inConstructor, inbStrictTyping);
@@ -36,45 +36,50 @@ namespace BeauPools
 
         #region IPool
 
-        public int Capacity
-        {
+        public int Capacity {
             get { return m_Elements.Capacity; }
         }
 
-        public int Count
-        {
+        public int Count {
             get { return m_Elements.Count; }
         }
 
-        public int InUse
-        {
+        public int InUse {
             get { return m_UseCount; }
         }
 
-        public void Prewarm(int inCount)
-        {
-            while (m_Elements.Count < inCount)
-            {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Prewarm(int inCount) {
+            int space = m_Elements.Count + inCount + m_UseCount;
+            if (space > m_Elements.Capacity) {
+                m_Elements.Capacity = space;
+            }
+
+            while (m_Elements.Count < inCount) {
                 m_Elements.Add(m_Config.Construct(this));
             }
         }
 
-        public void Shrink(int inCount)
-        {
-            for (int i = m_Elements.Count - 1; i >= inCount; --i)
-            {
+        [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+        public void Shrink(int inCount) {
+#if VERIFY_POOLS
+            if (inCount < 0) {
+                throw new ArgumentOutOfRangeException("inCount");
+            }
+#endif // VERIFY_POOLS
+            for (int i = m_Elements.Count - 1; i >= inCount; --i) {
                 m_Config.Destroy(this, m_Elements[i]);
                 m_Elements.RemoveAt(i);
             }
         }
 
-        public void Clear()
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear() {
             Shrink(0);
         }
 
-        public void Dispose()
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose() {
             Clear();
             m_Elements = null;
         }
@@ -83,24 +88,25 @@ namespace BeauPools
 
         #region IPool<T>
 
-        public PoolConfig<T> Config
-        {
+        public PoolConfig<T> Config {
             get { return m_Config; }
         }
 
-        public virtual T Alloc()
-        {
+        public virtual T Alloc() {
             T element = InternalAlloc();
             m_Config.OnAlloc(this, element);
             return element;
         }
 
-        public virtual void Free(T inElement)
-        {
+        void IPool.Free(object inElement) {
+            Free((T) inElement);
+        }
+
+        public virtual void Free(T inElement) {
             Pool.VerifyObject(this, inElement);
             Pool.VerifyNotInPool(m_Elements, inElement);
 
-            --m_UseCount;
+            m_UseCount--;
             Pool.VerifyBalance(m_UseCount);
 
             m_Elements.Add(inElement);
@@ -108,25 +114,22 @@ namespace BeauPools
             m_Config.OnFree(this, inElement);
         }
 
-        public bool TryAlloc(out T outElement)
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryAlloc(out T outElement) {
             outElement = Alloc();
             return true;
         }
 
-        protected T InternalAlloc()
-        {
-            ++m_UseCount;
+        [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+        protected T InternalAlloc() {
+            m_UseCount++;
 
             T element;
             int elementIndex = m_Elements.Count - 1;
-            if (elementIndex >= 0)
-            {
+            if (elementIndex >= 0) {
                 element = m_Elements[elementIndex];
                 m_Elements.RemoveAt(elementIndex);
-            }
-            else
-            {
+            } else {
                 element = m_Config.Construct(this);
             }
 

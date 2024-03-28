@@ -7,13 +7,11 @@
  * Purpose: Interface for an alloc/free event handler.
  */
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Pool event listener. Receives alloc/free pool events.
     /// </summary>
-    public interface IPoolAllocHandler
-    {
+    public interface IPoolAllocHandler {
         /// <summary>
         /// Called when the object is allocated from the pool.
         /// </summary>

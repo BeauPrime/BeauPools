@@ -7,13 +7,11 @@
  * Purpose: Interface for a construct/destruct event handler.
  */
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Pool event listener. Receives construct/destruct pool events.
     /// </summary>
-    public interface IPoolConstructHandler
-    {
+    public interface IPoolConstructHandler {
         /// <summary>
         /// Called when the object is constructed for the pool.
         /// </summary>

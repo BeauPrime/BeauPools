@@ -1,7 +1,7 @@
 # BeauPools
 
-**Current Version: 0.2.3**  
-Updated 18 Dec 2022 | [Changelog](CHANGELOG.md)
+**Current Version: 0.3.0**  
+Updated 28 March 2024 | [Changelog](CHANGELOG.md)
 
 ## About
 BeauPools is an object pooling library for Unity. It contains both generic pools and a Unity-specific prefab pool, along with utilities for managing those prefab pools.
@@ -202,12 +202,13 @@ Every pool also contains an ``PoolConfig`` object. This allows you to register a
 
 ### PrefabPool Requirements
 
-PrefabPools are pools intended for instantiating and pooling Unity prefab objects. To this end, they have the following properties.
+`PrefabPools` are pools intended for instantiating and pooling Unity prefab objects. To this end, they have the following properties.
 * New instances are assigned as children of a specific Transform. You should ensure this Transform is disabled to avoid unwanted behaviour from your pooled instances.
 * By default, allocated instances are assigned as children of a specific Transform, or the root of the scene if no Transform is provided.
 * By default, allocated instances reset their position and orientation on allocation. This can be disabled.
 * PrefabPool provides overridden versions of the ``Alloc`` method to mirror some of Unity's ``Instantiate`` methods. See [PrefabPool Members](#prefabpool-members) below for documentation.
 * Any components on the prefab or its children that implement the ``IPoolConstructHandler`` or ``IPoolAllocHandler`` will receive pool events (``OnConstruct``, ``OnAlloc``, ``OnFree``, ``OnDestruct``)
+* Instances are given a component tracking the PrefabPool that created it. You can use the `Pool.TryFree(GameObject)` or `Pool.TryFree(Component)` utilities to access this and free the prefab back to its pool, without needing to maintain your own reference to the pool itself.
 
 ### SerializablePool
 
@@ -215,7 +216,7 @@ BeauPools provides the ``SerializablePool`` object for easy setup of a PrefabPoo
 
 A SerializablePool operates by constructing an internal PrefabPool and performing operations on that pool. The internal pool will be constructed when ``Initialize`` is called. It will also be lazily instantiated if any ``Alloc`` or ``Prewarm`` methods are called. It will not be lazily instantiated if a ``Free`` method is called, and will error if the internal pool is not present.
 
-Note: due to Unity's serialization rules, you must create a subclass of SerializablePool for each type of component you with to pool.
+Note: due to Unity's serialization rules in versions prior to 2020.1, you must create a subclass of SerializablePool for each type of component you want to pool.
 
 ```csharp
 // This is necessary, since Unity won't serialize generic classes
@@ -324,3 +325,5 @@ public class TestSerializedPool : MonoBehaviour
 | ``RectTransformPool`` | ``RectTransform`` specialization of ``SerializablePool`` |
 | ``ImagePool`` | ``Image`` specialization of ``SerializablePool`` |
 | ``TempAlloc<T>`` | Disposable struct wrapper for a temporary allocation. Will free the allocated element on dispose. |
+| ``Pool.TryFree(Component)`` | Attempts to free the given prefab to its source `PrefabPool` or `SerializablePool` |
+| ``Pool.TryFree(GameObject)`` | Attempts to free the given prefab to its source `PrefabPool` or `SerializablePool` |

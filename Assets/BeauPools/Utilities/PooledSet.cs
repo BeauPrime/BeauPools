@@ -10,23 +10,19 @@
 using System;
 using System.Collections.Generic;
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Pooled version of a Set.
     /// </summary>
-    public class PooledSet<T> : HashSet<T>, IDisposable
-    {
-        private void Reset()
-        {
+    public sealed class PooledSet<T> : HashSet<T>, IDisposable {
+        private void Reset() {
             Clear();
         }
 
         /// <summary>
         /// Resets and recycles the PooledList to the pool.
         /// </summary>
-        public void Dispose()
-        {
+        public void Dispose() {
             Reset();
             s_ObjectPool.Free(this);
         }
@@ -39,16 +35,14 @@ namespace BeauPools
         // Object pool to hold available PooledSet.
         static private IPool<PooledSet<T>> s_ObjectPool;
 
-        static PooledSet()
-        {
+        static PooledSet() {
             s_ObjectPool = new DynamicPool<PooledSet<T>>(POOL_SIZE, (p) => new PooledSet<T>());
         }
 
         /// <summary>
         /// Retrieves a PooledList for use.
         /// </summary>
-        static public PooledSet<T> Create()
-        {
+        static public PooledSet<T> Create() {
             return s_ObjectPool.Alloc();
         }
 
@@ -56,8 +50,7 @@ namespace BeauPools
         /// Retrieves a PooledSet for use, copying the contents
         /// of the given IEnumerable.
         /// </summary>
-        static public PooledSet<T> Create(IEnumerable<T> inToCopy)
-        {
+        static public PooledSet<T> Create(IEnumerable<T> inToCopy) {
             PooledSet<T> set = s_ObjectPool.Alloc();
             foreach (var obj in inToCopy)
                 set.Add(obj);

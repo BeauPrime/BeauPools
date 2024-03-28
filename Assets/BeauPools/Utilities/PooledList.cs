@@ -10,23 +10,19 @@
 using System;
 using System.Collections.Generic;
 
-namespace BeauPools
-{
+namespace BeauPools {
     /// <summary>
     /// Pooled version of a List.
     /// </summary>
-    public class PooledList<T> : List<T>, IDisposable
-    {
-        private void Reset()
-        {
+    public sealed class PooledList<T> : List<T>, IDisposable {
+        private void Reset() {
             Clear();
         }
 
         /// <summary>
         /// Resets and recycles the PooledList to the pool.
         /// </summary>
-        public void Dispose()
-        {
+        public void Dispose() {
             Reset();
             s_ObjectPool.Free(this);
         }
@@ -39,16 +35,14 @@ namespace BeauPools
         // Object pool to hold available PooledList.
         static private IPool<PooledList<T>> s_ObjectPool;
 
-        static PooledList()
-        {
+        static PooledList() {
             s_ObjectPool = new DynamicPool<PooledList<T>>(POOL_SIZE, (p) => new PooledList<T>());
         }
 
         /// <summary>
         /// Retrieves a PooledList for use.
         /// </summary>
-        static public PooledList<T> Create()
-        {
+        static public PooledList<T> Create() {
             return s_ObjectPool.Alloc();
         }
 
@@ -56,8 +50,7 @@ namespace BeauPools
         /// Retrieves a PooledList for use, copying the contents
         /// of the given IEnumerable.
         /// </summary>
-        static public PooledList<T> Create(IEnumerable<T> inToCopy)
-        {
+        static public PooledList<T> Create(IEnumerable<T> inToCopy) {
             PooledList<T> list = s_ObjectPool.Alloc();
             list.AddRange(inToCopy);
             return list;
